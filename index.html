@@ -163,7 +163,7 @@
 
         .form-row-grid {
             display: grid;
-            grid-template-columns: 1fr 1.3fr; /* 제조일자 컬럼을 더 넓게 배치하여 짤림 방지 */
+            grid-template-columns: 1.3fr 1fr; /* 제조일자를 넓게, 기준 소비기한을 좁게 나란히 배치 */
             gap: 8px;
             margin-bottom: 8px;
         }
@@ -634,20 +634,22 @@
 
     <!-- 실시간 판정 탭 -->
     <div id="checker-tab" class="tab-content active">
+        <!-- 제품명 입력 영역 (실시간 판정 탭과 제조일 카드 사이에 배치) -->
+        <div class="card" style="padding: 10px 12px;">
+            <div class="form-group">
+                <label for="productName" style="font-size: 0.72rem; margin-bottom: 3px;">🏷️ 제품명 (Product Name)</label>
+                <input type="text" id="productName" placeholder="예: 풀무원 두부 번들" oninput="calculateResult()" style="padding: 6px 10px; font-size: 0.8rem;">
+            </div>
+        </div>
+
         <!-- 1단계: 제조일 및 기준 설정 -->
         <div class="card">
             <h2>📅 제조일 및 기준 설정</h2>
-            <div class="form-row-grid">
-                <div class="form-group">
-                    <label for="productName">제품명 (Product Name)</label>
-                    <input type="text" id="productName" placeholder="예: 풀무원 두부" oninput="calculateResult()">
-                </div>
-                <div class="form-group">
-                    <label for="mfgDate">제조일자</label>
-                    <input type="date" id="mfgDate" onchange="calculateResult()">
-                </div>
+            <div class="form-group" style="margin-bottom: 12px;">
+                <label for="mfgDate">제조일자</label>
+                <input type="date" id="mfgDate" onchange="calculateResult()">
             </div>
-            <div class="form-group" style="margin-top: 4px; margin-bottom: 10px;">
+            <div class="form-group" style="margin-bottom: 12px;">
                 <label>기준 소비기한</label>
                 <div class="input-row">
                     <input type="number" id="periodValue" value="9" min="1" oninput="calculateResult()">
