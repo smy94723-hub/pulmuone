@@ -63,22 +63,20 @@
             background-color: var(--bg);
             color: var(--text);
             transition: background-color 0.3s, color 0.3s;
-            height: 100vh;
-            height: -webkit-fill-available; /* 모바일 브라우저 주소창 대응 */
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
-            overflow: hidden; /* 스크롤바 완전히 제거 */
-            padding: 8px 12px;
+            overflow-y: auto; /* 잘림 방지를 위해 세로 스크롤 허용 */
+            -webkit-overflow-scrolling: touch;
+            padding: 8px 12px 32px 12px; /* 하단 버튼이 내비게이션 바에 가리지 않도록 여백 확보 */
         }
 
         .container {
             width: 100%;
             max-width: 440px;
-            height: 100%;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
             gap: 8px;
         }
 
@@ -166,9 +164,15 @@
 
         .form-row-grid {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            grid-template-columns: 1fr; /* 모바일 겹침 방지를 위해 세로 적재 */
+            gap: 8px;
             margin-bottom: 8px;
+        }
+
+        @media (min-width: 380px) {
+            .form-row-grid {
+                grid-template-columns: 1.2fr 1fr; /* 가로폭 확보 시에만 가로 배열 */
+            }
         }
 
         .form-group {
