@@ -170,6 +170,7 @@
 
         .form-group {
             margin-bottom: 0;
+            min-width: 0; /* Grid 자식 요소가 부모 너비를 넘지 못하게 제어 */
         }
 
         label {
@@ -195,6 +196,12 @@
             font-size: 0.85rem;
             font-weight: 600;
             outline: none;
+        }
+
+        input[type="date"] {
+            padding: 8px 6px; /* 좌우 여백을 줄여 날짜가 잘리거나 넘치는 것 방지 */
+            font-size: 0.8rem;
+            min-width: 0;
         }
 
         input[type="date"]:focus, input[type="number"]:focus, select:focus {
