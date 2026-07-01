@@ -98,17 +98,12 @@
         .pulmuone-logo {
             height: 42px;
             width: auto;
-            mix-blend-mode: multiply; /* 라이트 모드에서 흰색 배경 제거 */
-            will-change: mix-blend-mode;
-            transform: translate3d(0, 0, 0); /* iOS 사파리 블렌딩 버그용 하드웨어 가속 강제 */
+            /* 투명 이미지 파일 직접 사용으로 라이트 모드 처리 불필요 */
         }
 
-        /* 다크 모드에서 로고 색상 반전 및 검은색 배경 제거 */
+        /* 다크 모드에서 로고의 어두운 글씨를 흰색 계열로 반전 */
         body:not(.light-theme) .pulmuone-logo {
-            filter: invert(1) hue-rotate(180deg) brightness(1.1);
-            mix-blend-mode: screen;
-            will-change: filter, mix-blend-mode;
-            transform: translate3d(0, 0, 0);
+            filter: invert(1) hue-rotate(180deg) brightness(1.2);
         }
 
         .logo-text {
@@ -168,7 +163,7 @@
 
         .form-row-grid {
             display: grid;
-            grid-template-columns: 1.3fr 1fr; /* 제품명과 제조일자를 나란히 배치 */
+            grid-template-columns: 1fr 1.3fr; /* 제조일자 컬럼을 더 넓게 배치하여 짤림 방지 */
             gap: 8px;
             margin-bottom: 8px;
         }
