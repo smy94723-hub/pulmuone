@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>번들 제품 소비기한 판정기 | Pulmuone</title>
+    <!-- 구글 폰트 적용 (Outfit & Noto Sans KR) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            /* 자연을 담은 풀무원 스타일 초록/슬레이트 테마 */
+            --primary: #5c9c34;
+            --primary-hover: #4b8229;
+            --primary-light: #eef7e8;
+            --bg-dark: #0f172a;
+            --card-dark: #1e293b;
+            --text-dark: #f8fafc;
+            --text-muted-dark: #94a3b8;
+            --border-dark: #334155;
+            --logo-text-dark: #f8fafc;
+            
+            --bg-light: #f1f5f9;
+            --card-light: #ffffff;
+            --text-light: #0f172a;
+            --text-muted-light: #64748b;
+            --border-light: #e2e8f0;
+            --logo-text-light: #2c2523;
+            
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            
+            /* 기본값: 시스템 설정을 따르거나 클래스로 토글 */
+            --bg: var(--bg-dark);
+            --card: var(--card-dark);
+            --text: var(--text-dark);
+            --text-muted: var(--text-muted-dark);
+            --border: var(--border-dark);
+            --logo-text: var(--logo-text-dark);
+        }
+
+        body.light-theme {
+            --bg: var(--bg-light);
+            --card: var(--card-light);
+            --text: var(--text-light);
+            --text-muted: var(--text-muted-light);
+            --border: var(--border-light);
+            --logo-text: var(--logo-text-light);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            transition: background-color 0.3s, color 0.3s;
+            height: 100vh;
+            height: -webkit-fill-available; /* 모바일 브라우저 주소창 대응 */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden; /* 스크롤바 완전히 제거 */
+            padding: 8px 12px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 440px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 4px 0;
+            height: 48px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pulmuone-logo {
+            height: 42px;
+            width: auto;
+            mix-blend-mode: multiply; /* 라이트 모드에서 흰색 배경 제거 */
+        }
+
+        /* 다크 모드에서 로고 색상 반전 및 검은색 배경 제거 */
+        body:not(.light-theme) .pulmuone-logo {
+            filter: invert(1) hue-rotate(180deg) brightness(1.1);
+            mix-blend-mode: screen;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 0.95rem;
+            letter-spacing: -0.5px;
+            margin-left: 2px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .logo-text span {
+            color: var(--primary);
+            font-weight: 800;
+            border-left: 2px solid var(--border);
+            padding-left: 8px;
+            height: 14px;
+            display: flex;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 4px 10px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            transition: all 0.2s;
+        }
+
+        /* 메인 카드 스타일 (전반적인 패딩 축소) */
+        .card {
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px 14px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s;
+        }
+
+        h2 {
+            font-size: 0.95rem;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 6px;
+        }
+
+        .form-row-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--text-muted);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 6px;
+        }
+
+        input[type="date"], input[type="number"], select {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: transparent;
+            color: var(--text);
+            font-size: 0.85rem;
+            font-weight: 600;
+            outline: none;
+        }
+
+        input[type="date"]:focus, input[type="number"]:focus, select:focus {
+            border-color: var(--primary);
+        }
+
+        .period-presets {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        .preset-btn {
+            background-color: var(--border);
+            border: none;
+            color: var(--text);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            flex: 1;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .preset-btn.active, .preset-btn:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* 구성품 리스트 (스크롤 높이 제한 및 내부 스크롤 적용) */
+        .components-container {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            min-height: 120px;
+            max-height: 220px; /* 스마트폰 높이 대응을 위한 세로 상한 */
+            overflow: hidden;
+        }
+
+        .components-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            overflow-y: auto; /* 리스트가 길어지면 내부에서만 스크롤 */
+            padding-right: 2px;
+            flex-grow: 1;
+        }
+
+        /* 크롬/사파리 스크롤바 디자인 */
+        .components-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .components-list::-webkit-scrollbar-thumb {
+            background-color: var(--border);
+            border-radius: 4px;
+        }
+
+        .component-item {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        body.light-theme .component-item {
+            background: rgba(0, 0, 0, 0.03);
+        }
+
+        .component-name {
+            flex: 1.2;
+            font-size: 0.8rem;
+            font-weight: 700;
+            border: none;
+            background: transparent;
+            color: var(--text);
+            outline: none;
+            padding: 4px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .component-name:focus {
+            border-bottom-color: var(--primary);
+        }
+
+        .component-date {
+            flex: 2;
+            padding: 6px 8px !important;
+            font-size: 0.8rem !important;
+        }
+
+        .delete-btn {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .delete-btn:hover {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .add-btn {
+            width: 100%;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border: 1px dashed var(--primary);
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            margin-top: 8px;
+        }
+
+        .add-btn:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* 결과 영역 - 최하단에 배치하며 강조 */
+        .result-card {
+            border: 2px solid var(--border);
+            text-align: center;
+            padding: 12px 14px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .result-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 800;
+        }
+
+        .result-date-display {
+            font-size: 1.7rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin: 2px 0;
+        }
+
+        .result-description {
+            font-size: 0.78rem;
+            line-height: 1.4;
+            color: var(--text-muted);
+        }
+
+        /* 적합 상태 */
+        .result-card.status-pass {
+            border-color: var(--success);
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.08) 0%, transparent 100%);
+        }
+        .result-card.status-pass .result-badge {
+            background-color: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+        .result-card.status-pass .result-date-display {
+            color: var(--success);
+        }
+
+        /* 부적합 상태 */
+        .result-card.status-fail {
+            border-color: var(--danger);
+            background: linear-gradient(180deg, rgba(239, 68, 68, 0.08) 0%, transparent 100%);
+        }
+        .result-card.status-fail .result-badge {
+            background-color: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+        .result-card.status-fail .result-date-display {
+            color: var(--danger);
+        }
+
+        /* 기본/입력 대기 상태 */
+        .result-card.status-idle {
+            border-color: var(--border);
+        }
+        .result-card.status-idle .result-badge {
+            background-color: var(--border);
+            color: var(--text-muted);
+        }
+
+        /* 정보 비교 영역 */
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            width: 100%;
+            margin-top: 4px;
+            border-top: 1px solid var(--border);
+            padding-top: 8px;
+            font-size: 0.72rem;
+        }
+
+        .info-box {
+            background-color: rgba(0, 0, 0, 0.15);
+            padding: 6px 8px;
+            border-radius: 6px;
+            text-align: center;
+        }
+
+        body.light-theme .info-box {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        .info-title {
+            color: var(--text-muted);
+            margin-bottom: 2px;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-weight: 700;
+        }
+
+        /* 애니메이션 */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(4px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 탭 네비게이션 스타일 */
+        .tabs-nav {
+            display: flex;
+            background-color: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 4px;
+            gap: 4px;
+            margin-bottom: 6px;
+        }
+
+        .tab-nav-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            font-weight: 700;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .tab-nav-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        /* 탭 콘텐츠 제어 */
+        .tab-content {
+            display: none;
+            flex-direction: column;
+            gap: 8px;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .tab-content.active {
+            display: flex;
+        }
+
+        /* 이력 리스트 스타일 */
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            overflow-y: auto;
+            max-height: calc(100vh - 210px); /* 스크롤 높이 대응 */
+            padding-right: 2px;
+            flex-grow: 1;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.15);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        body.light-theme .history-item {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .history-item:hover {
+            border-color: var(--primary);
+            transform: translateY(-1px);
+        }
+
+        .history-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            text-align: left;
+            flex: 1;
+        }
+
+        .history-prod-name {
+            font-size: 0.85rem;
+            font-weight: 800;
+        }
+
+        .history-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .history-dates {
+            font-size: 0.72rem;
+            margin-top: 2px;
+        }
+
+        .history-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-badge {
+            font-size: 0.7rem;
+            font-weight: 800;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .badge-pass {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+        }
+
+        .badge-fail {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+        }
+
+        .history-delete-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 0.95rem;
+            padding: 4px;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .history-delete-btn:hover {
+            background-color: rgba(239, 68, 68, 0.1);
+        }
+
+        /* 이력 없음 안내 */
+        .history-empty {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            gap: 8px;
+        }
+
+        .history-empty-icon {
+            font-size: 2rem;
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            padding: 2px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- 헤더 영역 (풀무원 공식 BI 스타일 반영) -->
+    <header>
+        <div class="logo-area">
+            <!-- 풀무원 공식 로고 이미지 (Base64) -->
+            <img class="pulmuone-logo" src="pulmuone_logo.png" alt="Pulmuone">
+            <div class="logo-text"><span>판정기</span></div>
+        </div>
+        <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
+            🌙 다크 모드
+        </button>
+    </header>
+
+    <!-- 탭 네비게이션 추가 -->
+    <div class="tabs-nav">
+        <button class="tab-nav-btn active" id="btn-checker-tab" onclick="switchTab('checker-tab')">📊 실시간 판정</button>
+        <button class="tab-nav-btn" id="btn-history-tab" onclick="switchTab('history-tab')">📋 이력 관리 <span id="historyCount">(0)</span></button>
+    </div>
+
+    <!-- 실시간 판정 탭 -->
+    <div id="checker-tab" class="tab-content active">
+        <!-- 1단계: 제조일 및 기준 설정 -->
+        <div class="card">
+            <h2>📅 제조일 및 기준 설정</h2>
+            <div class="form-row-grid">
+                <div class="form-group" style="grid-column: span 2; margin-bottom: 6px;">
+                    <label for="productName">제품명 (Product Name)</label>
+                    <input type="text" id="productName" placeholder="예: 풀무원 국산콩 두부 번들" oninput="calculateResult()">
+                </div>
+                <div class="form-group">
+                    <label for="mfgDate">제조일자</label>
+                    <input type="date" id="mfgDate" onchange="calculateResult()">
+                </div>
+                <div class="form-group">
+                    <label>기준 소비기한</label>
+                    <div class="input-row">
+                        <input type="number" id="periodValue" value="9" min="1" oninput="calculateResult()">
+                        <select id="periodUnit" onchange="calculateResult()">
+                            <option value="months" selected>개월</option>
+                            <option value="days">일</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="period-presets">
+                <button class="preset-btn active" onclick="setPresetPeriod(9, 'months', this)">9개월</button>
+                <button class="preset-btn" onclick="setPresetPeriod(6, 'months', this)">6개월</button>
+                <button class="preset-btn" onclick="setPresetPeriod(12, 'months', this)">12개월</button>
+                <button class="preset-btn" onclick="setPresetPeriod(30, 'days', this)">30일</button>
+            </div>
+        </div>
+
+        <!-- 2단계: 구성품 소비기한 입력 -->
+        <div class="card components-container">
+            <h2>📦 구성품 개별 소비기한</h2>
+            <div class="components-list" id="componentsList">
+                <!-- 동적으로 구성품 행이 추가됨 -->
+            </div>
+            <button class="add-btn" onclick="addComponentRow()">
+                ➕ 구성품 추가
+            </button>
+        </div>
+
+        <!-- 3단계: 판정 결과 및 저장 버튼 -->
+        <div class="card result-card status-idle" id="resultCard">
+            <span class="result-badge" id="resultBadge">대기 중</span>
+            <div class="result-date-display" id="resultDateDisplay">----년 --월 --일</div>
+            <div class="result-description" id="resultDescription">
+                제조일과 구성품 소비기한을 입력하면 판정이 진행됩니다.
+            </div>
+
+            <div class="info-grid">
+                <div class="info-box">
+                    <div class="info-title">기본 소비기한</div>
+                    <div class="info-value" id="bundleStdDate">----년 --월 --일</div>
+                </div>
+                <div class="info-box">
+                    <div class="info-title">가장 빠른 구성품</div>
+                    <div class="info-value" id="earliestCompDate">----년 --월 --일</div>
+                </div>
+            </div>
+            
+            <button id="saveHistoryBtn" class="add-btn" style="background-color: var(--primary); color: white; border: none; margin-top: 8px; font-size: 0.85rem;" onclick="saveCurrentResult()">
+                💾 판정 결과 저장하기
+            </button>
+        </div>
+    </div>
+
+    <!-- 이력 관리 탭 -->
+    <div id="history-tab" class="tab-content">
+        <div class="card" style="flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; max-height: calc(100vh - 160px);">
+            <h2>📋 저장된 판정 이력</h2>
+            <div class="history-list" id="historyList">
+                <!-- 동적으로 저장된 이력이 여기에 렌더링됨 -->
+            </div>
+        </div>
+        
+        <!-- 이력 제어 도구 카드 -->
+        <div class="card" style="padding: 10px 14px;">
+            <div style="display: flex; gap: 8px;">
+                <button class="add-btn" style="flex: 1; background-color: var(--success); color: white; border: none;" onclick="exportHistoryToCSV()">
+                    📥 엑셀(CSV) 내보내기
+                </button>
+                <button class="add-btn" style="flex: 1; background-color: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px dashed var(--danger);" onclick="clearAllHistory()">
+                    🗑️ 전체 삭제
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        © 2026 Pulmuone Food Safety & Packaging.
+    </footer>
+</div>
+
+<script>
+    // 오늘 날짜로 제조일 초기값 설정
+    window.addEventListener('DOMContentLoaded', () => {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('mfgDate').value = `${yyyy}-${mm}-${dd}`;
+        
+        // 기본 구성품 2개 추가
+        addComponentRow("구성품 A");
+        addComponentRow("구성품 B");
+        
+        // 초기 테마 설정 (시스템 테마 확인)
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches) {
+            document.body.classList.add('light-theme');
+            document.getElementById('themeToggleBtn').innerHTML = '☀️ 라이트 모드';
+        }
+        
+        calculateResult();
+        renderHistoryList();
+    });
+
+    // 테마 토글 함수
+    function toggleTheme() {
+        const body = document.body;
+        body.classList.toggle('light-theme');
+        const btn = document.getElementById('themeToggleBtn');
+        if (body.classList.contains('light-theme')) {
+            btn.innerHTML = '☀️ 라이트 모드';
+        } else {
+            btn.innerHTML = '🌙 다크 모드';
+        }
+    }
+
+    // 탭 전환 함수
+    function switchTab(tabId) {
+        const contents = document.querySelectorAll('.tab-content');
+        contents.forEach(tab => tab.classList.remove('active'));
+        
+        const tabButtons = document.querySelectorAll('.tab-nav-btn');
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        document.getElementById(`btn-${tabId}`).classList.add('active');
+        
+        if (tabId === 'history-tab') {
+            renderHistoryList();
+        }
+    }
+
+    // 기본 소비기한 기준 퀵 프리셋 버튼 설정
+    function setPresetPeriod(value, unit, btnElement) {
+        document.getElementById('periodValue').value = value;
+        document.getElementById('periodUnit').value = unit;
+        
+        const presets = document.querySelectorAll('.preset-btn');
+        presets.forEach(btn => btn.classList.remove('active'));
+        btnElement.classList.add('active');
+        
+        calculateResult();
+    }
+
+    let compCounter = 0;
+    
+    // 구성품 입력 행 추가 함수
+    function addComponentRow(defaultName = "", savedDate = "") {
+        compCounter++;
+        const listContainer = document.getElementById('componentsList');
+        const name = defaultName || `구성품 ${compCounter}`;
+        
+        const row = document.createElement('div');
+        row.className = 'component-item';
+        row.id = `comp-row-${compCounter}`;
+        
+        row.innerHTML = `
+            <input type="text" class="component-name" value="${name}" placeholder="구성품명" oninput="calculateResult()">
+            <input type="date" class="component-date" value="${savedDate}" onchange="calculateResult()">
+            <button class="delete-btn" onclick="removeComponentRow(${compCounter})">🗑️</button>
+        `;
+        
+        listContainer.appendChild(row);
+        
+        setTimeout(() => {
+            listContainer.scrollTop = listContainer.scrollHeight;
+        }, 50);
+
+        calculateResult();
+    }
+
+    // 구성품 입력 행 삭제 함수
+    function removeComponentRow(id) {
+        const row = document.getElementById(`comp-row-${id}`);
+        if (row) {
+            row.remove();
+        }
+        calculateResult();
+    }
+
+    // 날짜 포맷 변환 함수 (YYYY년 MM월 DD일)
+    function formatDateString(dateObj) {
+        if (!dateObj || isNaN(dateObj.getTime())) return "----년 --월 --일";
+        const yyyy = dateObj.getFullYear();
+        const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+        const dd = String(dateObj.getDate()).padStart(2, '0');
+        return `${yyyy}년 ${mm}월 ${dd}일`;
+    }
+
+    // 메인 계산 및 판정 로직
+    function calculateResult() {
+        const mfgDateVal = document.getElementById('mfgDate').value;
+        const periodVal = parseInt(document.getElementById('periodValue').value) || 0;
+        const periodUnit = document.getElementById('periodUnit').value;
+        
+        const resultCard = document.getElementById('resultCard');
+        const resultBadge = document.getElementById('resultBadge');
+        const resultDateDisplay = document.getElementById('resultDateDisplay');
+        const resultDescription = document.getElementById('resultDescription');
+        
+        const bundleStdDateEl = document.getElementById('bundleStdDate');
+        const earliestCompDateEl = document.getElementById('earliestCompDate');
+
+        if (!mfgDateVal) {
+            setIdleState();
+            return;
+        }
+
+        // 1. 번들 자체 기본 소비기한 계산
+        const mfgDate = new Date(mfgDateVal);
+        const stdDate = new Date(mfgDate);
+        if (periodUnit === 'months') {
+            stdDate.setMonth(stdDate.getMonth() + periodVal);
+        } else {
+            stdDate.setDate(stdDate.getDate() + periodVal);
+        }
+
+        bundleStdDateEl.textContent = formatDateString(stdDate);
+
+        // 2. 구성품들의 소비기한 파악 및 최소값 탐색
+        const compDateInputs = document.querySelectorAll('.component-date');
+        const compNames = document.querySelectorAll('.component-name');
+        
+        let earliestDate = null;
+        let earliestCompName = "";
+        let hasEmptyCompDate = false;
+
+        compDateInputs.forEach((input, index) => {
+            if (input.value) {
+                const compDate = new Date(input.value);
+                if (earliestDate === null || compDate < earliestDate) {
+                    earliestDate = compDate;
+                    earliestCompName = compNames[index].value || `구성품 ${index + 1}`;
+                }
+            } else {
+                hasEmptyCompDate = true;
+            }
+        });
+
+        if (earliestDate) {
+            earliestCompDateEl.textContent = formatDateString(earliestDate);
+        } else {
+            earliestCompDateEl.textContent = "입력 없음";
+        }
+
+        // 구성품 날짜 입력 누락 시 체크 알림
+        if (hasEmptyCompDate) {
+            resultCard.className = "card result-card status-idle";
+            resultBadge.textContent = "날짜 입력 중";
+            resultDateDisplay.textContent = "----년 --월 --일";
+            resultDescription.innerHTML = "⚠️ 소비기한이 입력되지 않은 구성품이 있습니다.";
+            return;
+        }
+
+        // 3. 판정 로직
+        if (compDateInputs.length === 0) {
+            resultCard.className = "card result-card status-pass";
+            resultBadge.textContent = "적합 (구성품 없음)";
+            resultDateDisplay.textContent = formatDateString(stdDate);
+            resultDescription.textContent = "번들 제품의 기본 소비기한을 날인하십시오.";
+            return;
+        }
+
+        if (earliestDate === null) {
+            setIdleState();
+            return;
+        }
+
+        const stdDateTime = stdDate.setHours(0,0,0,0);
+        const earliestCompDateTime = earliestDate.setHours(0,0,0,0);
+
+        if (earliestCompDateTime < stdDateTime) {
+            resultCard.className = "card result-card status-fail";
+            resultBadge.textContent = "부적합 (구성품 날짜 날인)";
+            resultDateDisplay.textContent = formatDateString(earliestDate);
+            resultDescription.innerHTML = `🚨 <strong>${earliestCompName}</strong>의 소비기한이 더 빠릅니다. 이 날짜로 날인하십시오.`;
+        } else {
+            resultCard.className = "card result-card status-pass";
+            resultBadge.textContent = "적합 (기본 날인)";
+            resultDateDisplay.textContent = formatDateString(stdDate);
+            resultDescription.innerHTML = `✅ 구성품 안전함. 기본 소비기한(<strong>${formatDateString(stdDate)}</strong>)을 날인하십시오.`;
+        }
+    }
+
+    function setIdleState() {
+        const resultCard = document.getElementById('resultCard');
+        const resultBadge = document.getElementById('resultBadge');
+        const resultDateDisplay = document.getElementById('resultDateDisplay');
+        const resultDescription = document.getElementById('resultDescription');
+        
+        resultCard.className = "card result-card status-idle";
+        resultBadge.textContent = "대기 중";
+        resultDateDisplay.textContent = "----년 --월 --일";
+        resultDescription.textContent = "날짜 입력 대기 중...";
+        
+        document.getElementById('bundleStdDate').textContent = "----년 --월 --일";
+        document.getElementById('earliestCompDate').textContent = "----년 --월 --일";
+    }
+
+    // 판정 결과 로컬스토리지 저장 함수
+    function saveCurrentResult() {
+        const mfgDateVal = document.getElementById('mfgDate').value;
+        const resultText = document.getElementById('resultBadge').textContent;
+        const finalDateText = document.getElementById('resultDateDisplay').textContent;
+        
+        if (!mfgDateVal || resultText === '대기 중' || resultText === '날짜 입력 중') {
+            alert('❌ 올바른 판정 결과가 나온 후에 저장할 수 있습니다.');
+            return;
+        }
+
+        const productName = document.getElementById('productName').value.trim() || '미지정 번들 제품';
+        const periodVal = document.getElementById('periodValue').value;
+        const periodUnit = document.getElementById('periodUnit').value === 'months' ? '개월' : '일';
+        
+        // 동적 구성품 정보 추출
+        const componentItems = document.querySelectorAll('.component-item');
+        const componentsSaved = [];
+        componentItems.forEach(item => {
+            componentsSaved.push({
+                name: item.querySelector('.component-name').value,
+                date: item.querySelector('.component-date').value
+            });
+        });
+
+        const record = {
+            id: Date.now(),
+            productName: productName,
+            mfgDate: mfgDateVal,
+            period: `${periodVal}${periodUnit}`,
+            periodValue: periodVal,
+            periodUnit: document.getElementById('periodUnit').value,
+            finalDate: finalDateText,
+            result: resultText,
+            timestamp: new Date().toLocaleString('ko-KR'),
+            components: componentsSaved
+        };
+
+        const history = JSON.parse(localStorage.getItem('bundleHistory') || '[]');
+        history.unshift(record); // 최근 이력이 위로 오게 추가
+        localStorage.setItem('bundleHistory', JSON.stringify(history));
+
+        renderHistoryList();
+        
+        // 시각적인 저장 피드백 효과
+        const saveBtn = document.getElementById('saveHistoryBtn');
+        const prevText = saveBtn.innerHTML;
+        saveBtn.innerHTML = '✅ 저장 완료!';
+        saveBtn.style.backgroundColor = 'var(--success)';
+        setTimeout(() => {
+            saveBtn.innerHTML = prevText;
+            saveBtn.style.backgroundColor = 'var(--primary)';
+        }, 1500);
+    }
+
+    // 이력 렌더링 함수
+    function renderHistoryList() {
+        const history = JSON.parse(localStorage.getItem('bundleHistory') || '[]');
+        document.getElementById('historyCount').textContent = `(${history.length})`;
+        
+        const historyList = document.getElementById('historyList');
+        historyList.innerHTML = '';
+
+        if (history.length === 0) {
+            historyList.innerHTML = `
+                <div class="history-empty">
+                    <div class="history-empty-icon">📋</div>
+                    <div>저장된 판정 이력이 없습니다.</div>
+                </div>
+            `;
+            return;
+        }
+
+        history.forEach(item => {
+            const isPass = item.result.includes('적합');
+            const itemEl = document.createElement('div');
+            itemEl.className = 'history-item';
+            // 이력 항목 클릭 시 해당 데이터 다시 불러오기
+            itemEl.setAttribute('onclick', `loadHistoryItem(${item.id})`);
+            
+            itemEl.innerHTML = `
+                <div class="history-info">
+                    <span class="history-prod-name">${item.productName}</span>
+                    <span class="history-meta">제조: ${item.mfgDate} (${item.period}) | 저장: ${item.timestamp.split('. ').slice(1, 4).join('.')}</span>
+                    <span class="history-dates">최종 날인: <strong>${item.finalDate}</strong></span>
+                </div>
+                <div class="history-right">
+                    <span class="history-badge ${isPass ? 'badge-pass' : 'badge-fail'}">${isPass ? '적합' : '부적합'}</span>
+                    <button class="history-delete-btn" onclick="deleteHistoryItem(${item.id}, event)">🗑️</button>
+                </div>
+            `;
+            historyList.appendChild(itemEl);
+        });
+    }
+
+    // 특정 이력 삭제 함수
+    function deleteHistoryItem(id, event) {
+        event.stopPropagation(); // 부모 항목 클릭(불러오기) 방지
+        if (!confirm('선택한 이력을 삭제하시겠습니까?')) return;
+
+        let history = JSON.parse(localStorage.getItem('bundleHistory') || '[]');
+        history = history.filter(item => item.id !== id);
+        localStorage.setItem('bundleHistory', JSON.stringify(history));
+        
+        renderHistoryList();
+    }
+
+    // 전체 이력 삭제 함수
+    function clearAllHistory() {
+        if (!confirm('🚨 모든 판정 이력을 삭제하시겠습니까? 복구할 수 없습니다.')) return;
+        localStorage.removeItem('bundleHistory');
+        renderHistoryList();
+    }
+
+    // 이력 불러오기 함수
+    function loadHistoryItem(id) {
+        const history = JSON.parse(localStorage.getItem('bundleHistory') || '[]');
+        const item = history.find(item => item.id === id);
+        if (!item) return;
+
+        // 기본 정보 입력 복구
+        document.getElementById('productName').value = item.productName;
+        document.getElementById('mfgDate').value = item.mfgDate;
+        document.getElementById('periodValue').value = item.periodValue;
+        document.getElementById('periodUnit').value = item.periodUnit;
+
+        // 퀵 프리셋 액티브 표시 초기화
+        const presets = document.querySelectorAll('.preset-btn');
+        presets.forEach(btn => btn.classList.remove('active'));
+
+        // 구성품 리스트 복구
+        const listContainer = document.getElementById('componentsList');
+        listContainer.innerHTML = '';
+        compCounter = 0;
+
+        if (item.components && item.components.length > 0) {
+            item.components.forEach(comp => {
+                addComponentRow(comp.name, comp.date);
+            });
+        }
+
+        // 판정 화면으로 전환
+        switchTab('checker-tab');
+        calculateResult();
+        
+        alert(`📂 [${item.productName}]의 입력 데이터를 불러왔습니다.`);
+    }
+
+    // 이력 엑셀(CSV) 다운로드 함수
+    function exportHistoryToCSV() {
+        const history = JSON.parse(localStorage.getItem('bundleHistory') || '[]');
+        if (history.length === 0) {
+            alert('저장된 판정 이력이 없습니다.');
+            return;
+        }
+
+        let csvContent = "\uFEFF"; // UTF-8 BOM 추가 (엑셀 한글 깨짐 방지)
+        csvContent += "제품명,제조일자,기준 소비기한 조건,최종 날인 소비기한,판정 결과,저장 일시\n";
+
+        history.forEach(item => {
+            // 판정결과 단순화
+            const judgment = item.result.includes('적합') ? '적합' : '부적합';
+            csvContent += `"${item.productName}","${item.mfgDate}","${item.period}","${item.finalDate}","${judgment}","${item.timestamp}"\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `풀무원_소비기한_판정이력_${new Date().toISOString().slice(0, 10)}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+</script>
+</body>
+</html>
