@@ -168,15 +168,9 @@
 
         .form-row-grid {
             display: grid;
-            grid-template-columns: 1fr; /* 모바일 겹침 방지를 위해 세로 적재 */
+            grid-template-columns: 1.3fr 1fr; /* 제품명과 제조일자를 나란히 배치 */
             gap: 8px;
             margin-bottom: 8px;
-        }
-
-        @media (min-width: 480px) {
-            .form-row-grid {
-                grid-template-columns: 1.2fr 1fr; /* 태블릿/PC 등 넓은 화면에서만 가로 배열 */
-            }
         }
 
         .form-group {
@@ -642,23 +636,23 @@
         <div class="card">
             <h2>📅 제조일 및 기준 설정</h2>
             <div class="form-row-grid">
-                <div class="form-group" style="grid-column: span 2; margin-bottom: 6px;">
+                <div class="form-group">
                     <label for="productName">제품명 (Product Name)</label>
-                    <input type="text" id="productName" placeholder="예: 풀무원 국산콩 두부 번들" oninput="calculateResult()">
+                    <input type="text" id="productName" placeholder="예: 풀무원 두부" oninput="calculateResult()">
                 </div>
                 <div class="form-group">
                     <label for="mfgDate">제조일자</label>
                     <input type="date" id="mfgDate" onchange="calculateResult()">
                 </div>
-                <div class="form-group">
-                    <label>기준 소비기한</label>
-                    <div class="input-row">
-                        <input type="number" id="periodValue" value="9" min="1" oninput="calculateResult()">
-                        <select id="periodUnit" onchange="calculateResult()">
-                            <option value="months" selected>개월</option>
-                            <option value="days">일</option>
-                        </select>
-                    </div>
+            </div>
+            <div class="form-group" style="margin-top: 4px; margin-bottom: 10px;">
+                <label>기준 소비기한</label>
+                <div class="input-row">
+                    <input type="number" id="periodValue" value="9" min="1" oninput="calculateResult()">
+                    <select id="periodUnit" onchange="calculateResult()">
+                        <option value="months" selected>개월</option>
+                        <option value="days">일</option>
+                    </select>
                 </div>
             </div>
             <div class="period-presets">
@@ -859,7 +853,7 @@
             return;
         }
 
-        // 1. 번들 자체 기본 소비기한 계산
+        // 1. 번들 자체 기본 소비기한 계산 (소비기한 기준 - 1일 설정 반영)
         const mfgDate = new Date(mfgDateVal);
         const stdDate = new Date(mfgDate);
         if (periodUnit === 'months') {
@@ -867,6 +861,7 @@
         } else {
             stdDate.setDate(stdDate.getDate() + periodVal);
         }
+        stdDate.setDate(stdDate.getDate() - 1); // 기준일로부터 하루를 뺌 (-1일)
 
         bundleStdDateEl.textContent = formatDateString(stdDate);
 
