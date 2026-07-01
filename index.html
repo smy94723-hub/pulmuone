@@ -232,32 +232,17 @@
             color: white;
         }
 
-        /* 구성품 리스트 (스크롤 높이 제한 및 내부 스크롤 적용) */
+        /* 구성품 리스트 (동적 크기 증가형) */
         .components-container {
             display: flex;
             flex-direction: column;
-            flex-grow: 1;
-            min-height: 120px;
-            max-height: 220px; /* 스마트폰 높이 대응을 위한 세로 상한 */
-            overflow: hidden;
         }
 
         .components-list {
             display: flex;
             flex-direction: column;
             gap: 6px;
-            overflow-y: auto; /* 리스트가 길어지면 내부에서만 스크롤 */
-            padding-right: 2px;
-            flex-grow: 1;
-        }
-
-        /* 크롬/사파리 스크롤바 디자인 */
-        .components-list::-webkit-scrollbar {
-            width: 4px;
-        }
-        .components-list::-webkit-scrollbar-thumb {
-            background-color: var(--border);
-            border-radius: 4px;
+            margin-bottom: 4px;
         }
 
         .component-item {
